@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}蔬果智能识别系统{% endblock %}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft YaHei", sans-serif; }
+  body { min-height: 100vh; background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #fffde7 100%); }
+  nav { background: #2e7d32; padding: 0 40px; display: flex; align-items: center; height: 56px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.15); position: sticky; top: 0; z-index: 100; }
+  nav .logo { color: #fff; font-size: 18px; font-weight: bold; margin-right: 40px; }
+  nav a { color: #c8e6c9; text-decoration: none; margin-right: 24px; font-size: 15px; padding: 6px 10px; border-radius: 6px; }
+  nav a:hover, nav a.active { color: #fff; background: rgba(255,255,255,.15); }
+  .container { max-width: 1100px; margin: 24px auto; padding: 0 20px; }
+  .card { background: #fff; border-radius: 16px; box-shadow: 0 4px 18px rgba(46,125,50,.12); padding: 24px; margin-bottom: 24px; }
+  .card h2 { font-size: 18px; color: #33691e; margin-bottom: 16px; border-left: 4px solid #66bb6a; padding-left: 10px; }
+  .footer { text-align: center; color: #a5a5a5; font-size: 12px; padding: 24px; }
+  .btn { padding: 10px 22px; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; transition: .2s; }
+  .btn-primary { background: #43a047; color: #fff; }
+  .btn-primary:hover { background: #2e7d32; }
+  .btn-secondary { background: #e8f5e9; color: #2e7d32; }
+  .btn-secondary:hover { background: #c8e6c9; }
+  .bar-row { margin: 10px 0; }
+  .bar-row .lab { display: flex; justify-content: space-between; font-size: 14px; color: #444; margin-bottom: 4px; }
+  .bar { height: 14px; background: #e0e0e0; border-radius: 7px; overflow: hidden; }
+  .bar > div { height: 100%; background: linear-gradient(90deg, #81c784, #43a047); border-radius: 7px; width: 0; transition: width .6s; }
+  .main-result { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .main-result .name { font-size: 30px; color: #1b5e20; font-weight: bold; }
+  .main-result .kind { background: #43a047; color: #fff; padding: 2px 12px; border-radius: 20px; font-size: 13px; }
+  .placeholder { color: #9e9e9e; text-align: center; padding: 40px 0; }
+  img.responsive { max-width: 100%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<nav>
+  <span class="logo">🍎 蔬果智能识别系统</span>
+  <a href="/" class="{{ 'active' if request.path == '/' }}">首页</a>
+  <a href="/static" class="{{ 'active' if request.path == '/static' }}">静态检测</a>
+  <a href="/dynamic" class="{{ 'active' if request.path == '/dynamic' }}">动态监测</a>
+  <a href="/evaluation" class="{{ 'active' if request.path == '/evaluation' }}">模型评估</a>
+</nav>
+<div class="container">
+{% block content %}{% endblock %}
+</div>
+<div class="footer">神经网络与深度学习实训 · 基于 TensorFlow / Keras CNN 模型 · Flask Web 部署</div>
+</body>
+</html>

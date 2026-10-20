@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人脸表情识别 - 摄像头实时识别</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #333; }
+        .container { max-width: 860px; margin: 24px auto; padding: 0 16px; }
+        h1 { font-size: 22px; margin-bottom: 4px; }
+        .sub { color: #888; font-size: 13px; margin-bottom: 18px; }
+        .card { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 16px;
+                box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .nav a { margin-right: 14px; color: #1a73e8; text-decoration: none; font-size: 14px; }
+        .nav a.active { font-weight: bold; }
+        button { background: #1a73e8; color: #fff; border: none; border-radius: 6px;
+                 padding: 9px 22px; font-size: 14px; cursor: pointer; margin-right: 10px; }
+        button:hover { background: #1557b0; }
+        button:disabled { background: #b9c6e2; cursor: not-allowed; }
+        .video-box { position: relative; width: 100%; max-width: 640px; background: #000;
+                     border-radius: 8px; overflow: hidden; }
+        canvas { width: 100%; display: block; }
+        .status { margin-top: 10px; font-size: 14px; color: #555; }
+        .status b { color: #1a73e8; }
+        .hint { color: #999; font-size: 13px; margin-top: 10px; line-height: 1.7; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>人脸表情识别系统</h1>
+        <div class="sub">《神经网络与深度学习实训》- 模块（6）部署与应用 - 实时情绪识别</div>
+        <div class="nav">
+            <a href="/">静态图片识别</a>
+            <a class="active" href="/realtime">摄像头实时识别</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <button id="btnStart">开启摄像头</button>
+        <button id="btnStop" disabled>停止</button>
+        <div class="status" id="status">点击“开启摄像头”开始实时识别。</div>
+        <div class="video-box"><canvas id="canvas" width="640" height="480"></canvas></div>
+        <div class="hint">
+            说明：画面由浏览器采集，每 200ms 提交一帧到服务端识别，并在画面上叠加结果。
+            浏览器摄像头权限仅允许在 localhost 或 HTTPS 下使用，本机访问可直接运行；
+            局域网设备访问需启动 HTTPS。按浏览器提示允许摄像头访问即可。
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const btnStart = document.getElementById("btnStart");
+const btnStop = document.getElementById("btnStop");
+const statusEl = document.getElementById("status");
+
+let stream = null;
+let timer = null;
+let busy = false;
+
+function setStatus(html) { statusEl.innerHTML = html; }
+
+async function startCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus("<b style='color:#d93025'>当前浏览器不支持摄像头采集，请使用 Chrome / Edge 并通过 localhost 访问。</b>");
+        return;
+    }
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 640, height: 480, facingMode: "user" }, audio: false
+        });
+        const video = document.createElement("video");
+        video.srcObject = stream;
+        video.muted = true;
+        await video.play();
+
+        // 持续绘制视频画面
+        timer = setInterval(() => { ctx.drawImage(video, 0, 0, canvas.width, canvas.height); }, 33);
+
+        // 定期提交帧到服务端识别
+        setInterval(() => submitFrame(), 200);
+        btnStart.disabled = true;
+        btnStop.disabled = false;
+        setStatus("摄像头已开启，实时识别中…");
+    } catch (err) {
+        setStatus("<b style='color:#d93025'>无法访问摄像头：" + err.message + "</b>");
+    }
+}
+
+function stopCamera() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    if (timer) { clearInterval(timer); timer = null; }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+    setStatus("已停止。");
+}
+
+async function submitFrame() {
+    if (busy || !stream) return;
+    busy = true;
+    const t0 = performance.now();
+    try {
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        const resp = await fetch("/predict_frame", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: dataUrl })
+        });
+        const data = await resp.json();
+        const cost = Math.round(performance.now() - t0);
+
+        if (data.error) { setStatus("<b style='color:#d93025'>" + data.error + "</b>"); return; }
+
+        // 叠加识别结果
+        for (const r of data.results) {
+            if (!r.box) continue;
+            const [x1, y1, x2, y2] = scaleBox(r.box);
+            ctx.strokeStyle = "#00e676";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+            const text = r.label_zh + " " + Math.round(r.confidence * 100) + "%";
+            drawLabel(text, x1, y1);
+        }
+        setStatus("检测到人脸：<b>" + data.count + "</b> ｜ 本帧耗时：<b>" + cost + " ms</b>");
+    } catch (e) {
+        setStatus("<b style='color:#d93025'>请求失败：" + e.message + "</b>");
+    } finally {
+        busy = false;
+    }
+}
+
+// 服务端坐标基于 640x480 帧，与画布一致；保留缩放逻辑以适配不同分辨率
+function scaleBox(box) { return box; }
+
+function drawLabel(text, x, y) {
+    ctx.font = "bold 18px 'Microsoft YaHei', sans-serif";
+    const w = ctx.measureText(text).width + 12;
+    const ly = y > 26 ? y - 26 : y + 4;
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(x, ly, w, 24);
+    ctx.fillStyle = "#00e676";
+    ctx.fillText(text, x + 6, ly + 17);
+}
+
+btnStart.addEventListener("click", startCamera);
+btnStop.addEventListener("click", stopCamera);
+</script>
+</body>
+</html>

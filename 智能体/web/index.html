@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>本地智能体 · ReAct + 联网搜索</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-light: #6366f1;
+    --primary-soft: #eef2ff;
+    --bg: #f3f4f6;
+    --card: #ffffff;
+    --text: #1f2937;
+    --text-2: #6b7280;
+    --border: #e5e7eb;
+    --ok: #059669;
+    --warn: #d97706;
+    --err: #dc2626;
+    --side-w: 264px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); display: flex; overflow: hidden;
+  }
+  /* ============ 侧边栏 ============ */
+  aside {
+    width: var(--side-w); flex-shrink: 0; background: #111827; color: #d1d5db;
+    display: flex; flex-direction: column; padding: 20px 16px; gap: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: #fff; }
+  .brand .logo {
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .brand small { display: block; font-size: 11px; font-weight: 400; color: #9ca3af; margin-top: 2px; }
+  .side-section { display: flex; flex-direction: column; gap: 8px; }
+  .side-label { font-size: 12px; color: #9ca3af; letter-spacing: 1px; display: flex; align-items: center; }
+  #modelRefresh {
+    margin-left: auto; background: none; border: 1px solid #374151; color: #9ca3af; border-radius: 6px;
+    font-size: 11px; padding: 1px 7px; cursor: pointer; font-family: inherit;
+  }
+  #modelRefresh:hover { color: #fff; border-color: #6b7280; }
+  #modelRefresh:disabled { opacity: .5; cursor: wait; }
+  select, input[type=range] { width: 100%; }
+  select {
+    background: #1f2937; color: #e5e7eb; border: 1px solid #374151; border-radius: 8px;
+    padding: 8px 10px; font-size: 13px; outline: none;
+  }
+  #modelDesc {
+    font-size: 11.5px; line-height: 1.55; color: #9ca3af; padding: 0 2px;
+  }
+  #modelDesc b { color: #a5b4fc; font-weight: 600; }
+  #modelDesc.warn { color: #fbbf24; }
+  .temp-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .temp-row span:last-child { min-width: 48px; text-align: right; color: #a5b4fc; font-weight: 600; }
+  /* 算力档位滑块 */
+  .util-box { display: flex; flex-direction: column; gap: 4px; }
+  .util-track {
+    position: relative; height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, #10b981, #6366f1, #8b5cf6, #f59e0b);
+    margin: 2px 0;
+  }
+  .util-track::before, .util-track::after {
+    content: ""; position: absolute; top: -3px; width: 0; height: 0; border-style: solid;
+  }
+  .util-track::before { left: 0; border-width: 6px 0 6px 8px; border-color: transparent transparent transparent #10b981; }
+  .util-track::after { right: 0; border-width: 6px 8px 6px 0; border-color: transparent #f59e0b transparent transparent; }
+  #utilRange {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: transparent;
+    position: relative; z-index: 2; margin: -10px 0 0; cursor: pointer;
+  }
+  #utilRange::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%;
+    background: #fff; border: 3px solid #6366f1; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    cursor: pointer; transition: border-color .15s, transform .1s;
+  }
+  #utilRange::-webkit-slider-thumb:hover { transform: scale(1.12); }
+  #utilRange::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid #6366f1;
+    box-shadow: 0 1px 4px rgba(0,0,0,.4); cursor: pointer;
+  }
+  .util-ticks { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .util-ticks span { transition: color .15s, font-weight .15s; }
+  .util-ticks span.active { color: #fff; font-weight: 700; }
+  .util-desc { font-size: 11px; color: #9ca3af; text-align: center; min-height: 15px; }
+
+  .switch-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 10px 12px;
+  }
+  .switch-row .txt { font-size: 13px; }
+  .switch-row .txt b { color: #fff; }
+  .switch-row .txt i { display: block; font-style: normal; font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0; background: #4b5563; border-radius: 24px; cursor: pointer; transition: .2s;
+  }
+  .slider::before {
+    content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: .2s;
+  }
+  .switch input:checked + .slider { background: var(--primary-light); }
+  .switch input:checked + .slider::before { transform: translateX(18px); }
+
+  .side-btn {
+    background: #1f2937; border: 1px solid #374151; color: #e5e7eb; border-radius: 9px;
+    padding: 9px; font-size: 13px; cursor: pointer; transition: .15s; text-align: center;
+  }
+  .side-btn:hover { background: #374151; border-color: #4b5563; }
+  .side-spacer { flex: 1; }
+  .status { font-size: 12px; color: #9ca3af; display: flex; flex-direction: column; gap: 5px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .dot.ok { background: #10b981; } .dot.bad { background: #ef4444; }
+  .mem-info { font-size: 11px; color: #6b7280; }
+
+  /* ============ 主区域 ============ */
+  main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  header.topbar {
+    height: 58px; background: var(--card); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 12px; flex-shrink: 0;
+  }
+  .topbar h1 { font-size: 15px; font-weight: 600; }
+  .topbar .mode-chip {
+    font-size: 12px; padding: 3px 10px; border-radius: 999px;
+    background: var(--primary-soft); color: var(--primary); font-weight: 600;
+  }
+  .topbar .mode-chip.off { background: #f3f4f6; color: var(--text-2); }
+
+  #chat { flex: 1; overflow-y: auto; padding: 28px 24px 12px; scroll-behavior: smooth; }
+  .wrap { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+
+  .msg { display: flex; gap: 12px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .msg.user { flex-direction: row-reverse; }
+  .msg.user .avatar { background: #dbeafe; }
+  .msg.assistant .avatar { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+  .bubble { max-width: 78%; min-width: 0; }
+  .msg.user .bubble {
+    background: var(--primary); color: #fff; padding: 11px 15px; border-radius: 14px 14px 4px 14px;
+    font-size: 14.5px; line-height: 1.65; white-space: pre-wrap; word-break: break-word;
+  }
+  .msg.assistant .bubble { max-width: 100%; flex: 1; }
+  .answer {
+    background: var(--card); border: 1px solid var(--border); padding: 13px 16px;
+    border-radius: 4px 14px 14px 14px; font-size: 14.5px; line-height: 1.75;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .answer a { color: var(--primary); text-decoration: underline; word-break: break-all; }
+  .answer.error-bubble { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+
+  /* 思考过程时间线 */
+  .trace { margin-bottom: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); overflow: hidden; }
+  .trace-head {
+    width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 13px;
+    background: #fafafa; border: none; cursor: pointer; font-size: 12.5px; color: var(--text-2); font-family: inherit;
+  }
+  .trace-head:hover { background: #f3f4f6; }
+  .trace-head .spin { transition: transform .2s; font-size: 10px; }
+  .trace.collapsed .spin { transform: rotate(-90deg); }
+  .trace-head .summary { margin-left: auto; font-size: 11px; }
+  .trace-body { padding: 6px 14px 12px 16px; }
+  .trace.collapsed .trace-body { display: none; }
+  .step { position: padding-left: 0; }
+  .step-item { position: relative; padding: 7px 0 7px 26px; font-size: 13px; line-height: 1.6; border-left: 2px solid var(--border); margin-left: 8px; padding-left: 16px; }
+  .step-item:last-child { border-left-color: transparent; }
+  .step-item .ico {
+    position: absolute; left: -11px; top: 9px; width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff;
+  }
+  .ico.thought { background: #6366f1; }
+  .ico.action { background: #d97706; }
+  .ico.obs { background: #059669; }
+  .step-item .lab { font-weight: 600; color: var(--text); }
+  .step-item .val { color: var(--text-2); white-space: pre-wrap; word-break: break-word; }
+  .step-item .val code {
+    background: #f3f4f6; padding: 1px 6px; border-radius: 5px; font-family: Consolas, monospace;
+    font-size: 12px; color: #b45309;
+  }
+  .step-item .obs-text {
+    margin-top: 4px; background: #f9fafb; border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 10px; color: #4b5563; max-height: 130px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-word; font-size: 12px;
+  }
+  .obs-text a { color: var(--primary); word-break: break-all; }
+  .pulse { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--primary-light); animation: pulse 1s infinite; margin-right: 5px; }
+  @keyframes pulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+
+  /* 空状态 */
+  .empty { text-align: center; padding: 9vh 20px 4vh; }
+  .empty .big-logo {
+    width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 18px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex; align-items: center; justify-content: center; font-size: 32px;
+  }
+  .empty h2 { font-size: 21px; margin-bottom: 8px; }
+  .empty p { color: var(--text-2); font-size: 13.5px; margin-bottom: 26px; }
+  .examples { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; max-width: 640px; margin: 0 auto; }
+  .example {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px;
+    text-align: left; cursor: pointer; transition: .15s; font-size: 13.5px; color: var(--text);
+  }
+  .example:hover { border-color: var(--primary-light); box-shadow: 0 4px 14px rgba(79,70,229,.1); transform: translateY(-1px); }
+  .example .e-ico { font-size: 19px; display: block; margin-bottom: 7px; }
+  .example .e-desc { color: var(--text-2); font-size: 12px; margin-top: 4px; line-height: 1.5; }
+
+  .banner {
+    max-width: 820px; margin: 0 auto 14px; background: #fffbeb; border: 1px solid #fde68a;
+    color: #92400e; border-radius: 10px; padding: 10px 14px; font-size: 13px; display: none;
+  }
+  .banner.show { display: block; }
+
+  /* 输入区（豆包风格：输入框 + 底部技能工具栏） */
+  .input-zone { padding: 10px 24px 22px; background: linear-gradient(180deg, transparent, var(--bg) 30%); flex-shrink: 0; }
+  .input-card {
+    max-width: 820px; margin: 0 auto; background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 10px 14px 8px; box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    display: flex; flex-direction: column; gap: 6px; transition: border-color .15s, box-shadow .15s;
+  }
+  .input-card:focus-within { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+  textarea {
+    width: 100%; border: none; outline: none; resize: none; font-family: inherit; font-size: 14.5px;
+    line-height: 1.6; padding: 6px 4px; max-height: 160px; background: transparent; color: var(--text);
+  }
+  .tool-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .tool-plus {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: #fff;
+    color: var(--text-2); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: .15s; flex-shrink: 0;
+  }
+  .tool-plus:hover { border-color: var(--primary-light); color: var(--primary); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 12px;
+    border-radius: 999px; border: 1px solid var(--border); background: #fff; color: var(--text-2);
+    font-size: 12.5px; cursor: pointer; transition: .15s; white-space: nowrap; font-family: inherit;
+  }
+  .chip:hover { border-color: var(--primary-light); color: var(--primary); background: var(--primary-soft); }
+  .chip.active { border-color: var(--primary-light); color: #fff; background: var(--primary-light); }
+  .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .7; }
+  .tool-spacer { flex: 1; }
+  #send {
+    width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; flex-shrink: 0;
+    background: var(--primary); color: #fff; font-size: 15px; transition: .15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #send:hover { background: var(--primary-light); transform: scale(1.05); }
+  #send:disabled { background: #c7d2fe; cursor: not-allowed; transform: none; }
+  .input-hint { max-width: 820px; margin: 8px auto 0; text-align: center; font-size: 11.5px; color: #9ca3af; }
+
+  /* 更多技能弹窗 */
+  .skills-pop {
+    position: absolute; bottom: calc(100% + 10px); left: 0; z-index: 50;
+    width: 300px; background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.12); padding: 12px; display: none;
+  }
+  .skills-pop.show { display: block; }
+  .skills-pop h4 { font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+  .skill-item {
+    display: flex; align-items: flex-start; gap: 8px; padding: 8px; border-radius: 10px; cursor: pointer; transition: .12s;
+  }
+  .skill-item:hover { background: var(--primary-soft); }
+  .skill-item .si-ico { font-size: 16px; flex-shrink: 0; }
+  .skill-item .si-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .skill-item .si-desc { font-size: 11.5px; color: var(--text-2); margin-top: 2px; line-height: 1.4; }
+
+  /* 打字机光标 */
+  .typing-cursor {
+    display: inline-block; width: 2px; height: 1.1em; background: var(--primary-light);
+    margin-left: 1px; vertical-align: text-bottom; animation: blink 1s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .answer.typing { white-space: pre-wrap; word-break: break-word; }
+
+  @media (max-width: 720px) {
+    aside { display: none; }
+    .bubble { max-width: 88%; }
+    .mobile-switch { display: inline-flex; margin-left: auto; }
+  }
+  .mobile-switch { display: none; width: 42px; height: 24px; }
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="brand">
+    <div class="logo">🤖</div>
+    <div>本地智能体<small>Ollama · ReAct · 双记忆</small></div>
+  </div>
+
+  <div class="side-section">
+    <div class="side-label">本地模型 <button id="modelRefresh" title="重新检测已安装模型（ollama pull 后点此刷新）">↻ 刷新</button></div>
+    <select id="modelSel" title="切换 Ollama 本地模型"></select>
+    <div id="modelDesc"></div>
+  </div>
+
+  <div class="side-section">
+    <div class="side-label">算力利用 <span style="float:right" id="utilVal">均衡</span></div>
+    <div class="util-box">
+      <div class="util-track"></div>
+      <input type="range" id="utilRange" min="1" max="5" step="1" value="3">
+      <div class="util-ticks"><span data-lvl="1">极速</span><span data-lvl="2">轻快</span><span data-lvl="3">均衡</span><span data-lvl="4">详尽</span><span data-lvl="5">深度</span></div>
+      <div class="util-desc" id="utilDesc">约 1024 字 · 6 步推理</div>
+    </div>
+  </div>
+
+  <div class="side-section">
+    <div class="side-label">能力开关</div>
+    <div class="switch-row">
+      <div class="txt"><b>🌐 联网搜索</b><i>开启后可查询实时网络信息</i></div>
+      <label class="switch">
+        <input type="checkbox" id="webSwitch" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <button class="side-btn" id="newChat">＋ 新建会话</button>
+  <button class="side-btn" id="clearBtn">🧹 清空当前对话记忆</button>
+
+  <div class="side-spacer"></div>
+  <div class="status">
+    <div><span class="dot bad" id="ollamaDot"></span><span id="ollamaTxt">检测中…</span></div>
+    <div class="mem-info" id="memInfo">长期记忆 0 条 · 持久化在本机</div>
+  </div>
+</aside>
+
+<main>
+  <header class="topbar">
+    <h1>对话</h1>
+    <span class="mode-chip" id="modeChip">🌐 联网模式</span>
+    <label class="switch mobile-switch">
+      <input type="checkbox" id="webSwitchMobile" checked>
+      <span class="slider"></span>
+    </label>
+  </header>
+
+  <div id="chat">
+    <div class="wrap">
+      <div class="banner" id="banner"></div>
+      <div id="messages">
+        <div class="empty" id="empty">
+          <div class="big-logo">🧠</div>
+          <h2>本地可运行智能体</h2>
+          <p>标准 ReAct 循环：思考 → 调用工具 → 观察 → 迭代 → 回答。数据全部在本机处理。</p>
+          <div class="examples">
+            <div class="example" data-q="帮我联网搜索一下，最近几天有什么重要的科技新闻？总结3条。">
+              <span class="e-ico">🌐</span>联网搜索资讯
+              <div class="e-desc">“最近有什么重要科技新闻？总结3条”</div>
+            </div>
+            <div class="example" data-q="搜索今天的北京天气，然后告诉我出门要不要带伞">
+              <span class="e-ico">☔</span>实时信息查询
+              <div class="e-desc">“今天北京天气如何，要带伞吗？”</div>
+            </div>
+            <div class="example" data-q="精确计算：(128 + 375) * 16 / 7 等于多少？">
+              <span class="e-ico">🧮</span>精确计算
+              <div class="e-desc">内置安全计算器，多步运算不出错</div>
+            </div>
+            <div class="example" data-q="读取这个文件并总结要点：c:/Users/nzg66/PycharmProjects/PythonProject6/.venv/智能体/local_agent.py">
+              <span class="e-ico">📄</span>读取本地文件
+              <div class="e-desc">给路径即可读取并总结文本文件</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-zone">
+    <div class="input-card" style="position:relative">
+      <div class="skills-pop" id="skillsPop">
+        <h4>可用技能（智能体会自动按需调用）</h4>
+        <div class="skill-item" data-tool="web">
+          <span class="si-ico">🌐</span>
+          <div><div class="si-name">联网搜索</div><div class="si-desc">查询新闻、天气、股价等实时信息（头条/360/Bing）</div></div>
+        </div>
+        <div class="skill-item" data-tool="calc">
+          <span class="si-ico">🧮</span>
+          <div><div class="si-name">精确计算</div><div class="si-desc">内置安全计算器，多步运算不出错</div></div>
+        </div>
+        <div class="skill-item" data-tool="file">
+          <span class="si-ico">📄</span>
+          <div><div class="si-name">读取本地文件</div><div class="si-desc">给路径即可读取并总结文本文件内容</div></div>
+        </div>
+        <div class="skill-item" data-tool="fetch">
+          <span class="si-ico">🔗</span>
+          <div><div class="si-name">网页正文提取</div><div class="si-desc">打开指定链接并提取全文，用于深度阅读</div></div>
+        </div>
+      </div>
+      <textarea id="input" rows="1" placeholder="发消息或按空格说话…"></textarea>
+      <div class="tool-row">
+        <button class="tool-plus" id="toolPlus" title="更多">+</button>
+        <button class="chip" data-chip="web" title="开启/关闭联网搜索"><span class="dot"></span>联网搜索</button>
+        <button class="chip" data-chip="calc" title="插入计算请求">🧮 计算器</button>
+        <button class="chip" data-chip="file" title="插入读文件请求">📄 读文件</button>
+        <button class="chip" data-chip="more" title="查看全部技能">◇ 更多技能</button>
+        <span class="tool-spacer"></span>
+        <button id="send" title="发送">➤</button>
+      </div>
+    </div>
+    <div class="input-hint">智能体可能犯错，重要信息请核实来源 · 联网搜索由本机直连 头条 / 360 / Bing 多引擎，不经过任何第三方服务器</div>
+  </div>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const chatEl = $("#messages"), emptyEl = $("#empty"), chatScroll = $("#chat");
+let sessionId = null, busy = false;
+
+/* ---------- 工具函数 ---------- */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function linkify(text) {
+  let t = escapeHtml(text);
+  // 1) Markdown 链接 [text](url) —— 优先处理，避免括号里的 URL 与文本拼接错乱
+  t = t.replace(/\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g,
+    (m, label, url) => {
+      const safe = url.replace(/&amp;/g, "&");
+      const txt = label.length > 80 ? label.slice(0, 80) + "…" : label;
+      return `<a href="${safe}" target="_blank" rel="noopener">${txt || safe}</a>`;
+    });
+  // 2) 剩余裸 URL（排除已在 href="..." 属性中、或已在 <a> 锚文本内的链接）
+  t = t.replace(/(^|[^">])(https?:\/\/[^\s<>\]\)）]+)/g,
+    (m, pre, url) => {
+      const safe = url.replace(/&amp;/g, "&").replace(/[.,;:!?）)]+$/, "");
+      const label = safe.length > 60 ? safe.slice(0, 60) + "…" : safe;
+      return pre + `<a href="${safe}" target="_blank" rel="noopener">${label}</a>`;
+    });
+  return t;
+}
+function scrollBottom() { chatScroll.scrollTop = chatScroll.scrollHeight; }
+
+/* ---------- 健康检查 / 配置 ---------- */
+async function loadHealth() {
+  try {
+    const h = await fetch("/api/health").then(r => r.json());
+    if (h.ollama_ok) {
+      $("#ollamaDot").className = "dot ok";
+      $("#ollamaTxt").textContent = "Ollama 已连接";
+      renderModels(h.model_details, h.model);
+    } else {
+      $("#ollamaDot").className = "dot bad";
+      $("#ollamaTxt").textContent = "Ollama 未运行";
+      showBanner("未检测到 Ollama 服务。请先启动 Ollama 并执行 ollama pull qwen2.5:3b，然后刷新本页。");
+    }
+    $("#utilRange").value = h.utilization || 3;
+    applyUtilUI(parseInt(h.utilization || 3, 10));
+    $("#memInfo").textContent = `长期记忆 ${h.long_term_memories} 条 · 持久化在本机`;
+  } catch (e) {
+    $("#ollamaDot").className = "dot bad";
+    $("#ollamaTxt").textContent = "后端未连接";
+    showBanner("无法连接后端服务，请确认 web_app.py 正在运行。");
+  }
+}
+function showBanner(msg) { const b = $("#banner"); b.textContent = msg; b.classList.add("show"); }
+
+function modelTag(name) {
+  const n = name.toLowerCase();
+  if (/(vl|vision|llava|qwen2-vl)/.test(n)) return "👁 视觉";
+  if (/(coder|code)/.test(n)) return "💻 代码";
+  if (/(r1|reasoning|reason|deepseek-r)/.test(n)) return "🧠 推理";
+  if (/(embed)/.test(n)) return "🔢 向量";
+  return "💬 对话";
+}
+function modelDesc(name) {
+  const n = (name || "").toLowerCase();
+  if (/(embed)/.test(n))
+    return {warn: true, html: "<b>向量模型</b>：仅供长期记忆做语义检索，不能用来对话，请勿选中提问。"};
+  if (/(vl|vision|llava|qwen2-vl)/.test(n))
+    return {warn: false, html: "<b>视觉模型</b>：能看懂图片、截图、图表和文档版面，也支持普通文字问答。"};
+  if (/(coder|code)/.test(n))
+    return {warn: false, html: "<b>代码模型</b>：擅长编写、修改、解释代码和排查程序错误。"};
+  if (/(r1|reasoning|reason|deepseek-r)/.test(n))
+    return {warn: false, html: "<b>推理模型</b>：带思维链，擅长逻辑分析、数学和分步推导，回答相对较慢。"};
+  if (/qwen2\.5:?7b/.test(n))
+    return {warn: false, html: "<b>大参数对话模型</b>：回答质量高、理解更准，适合复杂问题，速度较慢、较占内存。"};
+  if (/qwen2\.5:?1\.5b/.test(n))
+    return {warn: false, html: "<b>轻量对话模型</b>：响应最快、最省算力，适合简单问答，复杂任务稍弱。"};
+  if (/qwen2\.5/.test(n))
+    return {warn: false, html: "<b>通用对话模型</b>：速度与质量均衡，适合日常问答、联网搜索和工具调用。"};
+  return {warn: false, html: "<b>对话模型</b>：通用问答与工具调用。"};
+}
+function updateModelDesc() {
+  const box = $("#modelDesc");
+  const name = $("#modelSel").value;
+  if (!name || name.includes("未发现")) { box.textContent = ""; box.classList.remove("warn"); return; }
+  const d = modelDesc(name);
+  box.innerHTML = d.html;
+  box.classList.toggle("warn", d.warn);
+}
+function renderModels(details, current) {
+  const sel = $("#modelSel");
+  if (!details || !details.length) { sel.innerHTML = "<option>（未发现模型）</option>"; updateModelDesc(); return; }
+  sel.innerHTML = details.map(m => {
+    const extra = [m.param_size ? m.param_size + " 参数" : "",
+                   m.size_gb ? m.size_gb + " GB" : ""].filter(Boolean).join(" · ");
+    const label = `${modelTag(m.name)}  ${m.name}` + (extra ? " （" + extra + "）" : "");
+    return `<option value="${escapeHtml(m.name)}" ${m.name === current ? "selected" : ""}>${escapeHtml(label)}</option>`;
+  }).join("");
+  updateModelDesc();
+}
+async function refreshModels() {
+  const btn = $("#modelRefresh");
+  btn.disabled = true; btn.textContent = "检测中…";
+  try {
+    const d = await fetch("/api/models").then(r => r.json());
+    renderModels(d.details, null);
+    // 保留当前选中（服务端当前模型）
+    const h = await fetch("/api/health").then(r => r.json());
+    $("#modelSel").value = h.model;
+    updateModelDesc();
+  } finally {
+    btn.disabled = false; btn.textContent = "↻ 刷新";
+  }
+}
+$("#modelRefresh").addEventListener("click", refreshModels);
+$("#modelSel").addEventListener("change", async () => {
+  updateModelDesc();
+  await fetch("/api/config", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({model: $("#modelSel").value})});
+});
+const UTIL_NAMES = {1:"极速", 2:"轻快", 3:"均衡", 4:"详尽", 5:"深度"};
+const UTIL_DESC = {
+  1: "约 256 字 · 3 步推理（省电快答）",
+  2: "约 512 字 · 4 步推理",
+  3: "约 1024 字 · 6 步推理",
+  4: "约 1536 字 · 8 步推理",
+  5: "约 2048 字 · 10 步推理（深度作答）",
+};
+const UTIL_COLORS = {1:"#10b981", 2:"#22c55e", 3:"#6366f1", 4:"#8b5cf6", 5:"#f59e0b"};
+function applyUtilUI(lvl) {
+  $("#utilVal").textContent = UTIL_NAMES[lvl] || "均衡";
+  $("#utilDesc").textContent = UTIL_DESC[lvl] || "";
+  document.querySelectorAll(".util-ticks span").forEach(s => {
+    s.classList.toggle("active", parseInt(s.dataset.lvl, 10) === lvl);
+  });
+  const c = UTIL_COLORS[lvl] || "#6366f1";
+  const thumb = document.querySelector("#utilRange");
+  if (thumb) thumb.style.setProperty("--thumb-color", c);
+  // 内联 thumb 边框色（兼容 webkit）
+  const styleId = "util-thumb-style";
+  let st = document.getElementById(styleId);
+  if (!st) { st = document.createElement("style"); st.id = styleId; document.head.appendChild(st); }
+  st.textContent = `#utilRange::-webkit-slider-thumb{border-color:${c}}#utilRange::-moz-range-thumb{border-color:${c}}`;
+}
+let utilTimer;
+$("#utilRange").addEventListener("input", () => {
+  const lvl = parseInt($("#utilRange").value, 10);
+  applyUtilUI(lvl);
+  clearTimeout(utilTimer);
+  utilTimer = setTimeout(() => fetch("/api/config", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({utilization: lvl})}), 250);
+});
+function syncWebSwitches(src) {
+  const on = src.checked;
+  $("#webSwitch").checked = on;
+  $("#webSwitchMobile").checked = on;
+  const chip = document.querySelector('.chip[data-chip="web"]');
+  if (chip) chip.classList.toggle("active", on);
+  const popWeb = document.querySelector('.skill-item[data-tool="web"]');
+  if (popWeb) popWeb.style.opacity = on ? "1" : ".4";
+  const chip2 = $("#modeChip");
+  chip2.textContent = on ? "🌐 联网模式" : "🔒 本地模式";
+  chip2.className = "mode-chip" + (on ? "" : " off");
+}
+$("#webSwitch").addEventListener("change", e => syncWebSwitches(e.target));
+$("#webSwitchMobile").addEventListener("change", e => syncWebSwitches(e.target));
+
+/* ---------- 底部技能工具栏 ---------- */
+// 点击工具按钮仅聚焦输入框，不自动填入任何文字
+function focusInput() {
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+}
+document.querySelectorAll('.chip[data-chip]').forEach(chip => {
+  chip.addEventListener("click", () => {
+    const kind = chip.dataset.chip;
+    if (kind === "web") {
+      const sw = $("#webSwitch");
+      sw.checked = !sw.checked;
+      syncWebSwitches(sw);
+    } else if (kind === "calc" || kind === "file") {
+      focusInput();
+    } else if (kind === "more") {
+      $("#skillsPop").classList.toggle("show");
+    }
+  });
+});
+$("#toolPlus").addEventListener("click", () => $("#skillsPop").classList.toggle("show"));
+// 点击弹窗外部关闭
+document.addEventListener("click", e => {
+  const pop = $("#skillsPop");
+  if (!pop.classList.contains("show")) return;
+  if (!e.target.closest("#skillsPop") && !e.target.closest('[data-chip="more"]') && !e.target.closest("#toolPlus")) {
+    pop.classList.remove("show");
+  }
+});
+// 弹窗内技能项点击：仅聚焦输入框，不填入文字
+document.querySelectorAll(".skill-item").forEach(item => {
+  item.addEventListener("click", () => {
+    $("#skillsPop").classList.remove("show");
+    focusInput();
+  });
+});
+$("#newChat").addEventListener("click", async () => {
+  if (busy) return;
+  sessionId = null;
+  chatEl.innerHTML = "";
+  chatEl.appendChild(emptyEl); emptyEl.style.display = "";
+});
+$("#clearBtn").addEventListener("click", async () => {
+  if (!sessionId) { alert("当前还没有对话记录"); return; }
+  await fetch("/api/clear", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({session_id: sessionId})});
+  alert("短期对话记忆已清空（长期记忆保留）");
+});
+
+/* ---------- 发送消息 ---------- */
+const input = $("#input"), sendBtn = $("#send");
+input.addEventListener("input", () => {
+  input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 160) + "px";
+});
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); doSend(); }
+});
+sendBtn.addEventListener("click", doSend);
+document.querySelectorAll(".example").forEach(el =>
+  el.addEventListener("click", () => {
+    input.value = el.dataset.q;
+    input.dispatchEvent(new Event("input"));
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }));
+
+function addUserMsg(text) {
+  if (emptyEl.parentNode) emptyEl.style.display = "none";
+  const div = document.createElement("div");
+  div.className = "msg user";
+  div.innerHTML = `<div class="avatar">🧑</div><div class="bubble">${escapeHtml(text)}</div>`;
+  chatEl.appendChild(div); scrollBottom();
+}
+
+function addAssistantEl() {
+  const div = document.createElement("div");
+  div.className = "msg assistant";
+  div.innerHTML = `
+    <div class="avatar">🤖</div>
+    <div class="bubble">
+      <div class="trace collapsed" style="display:none">
+        <button class="trace-head">
+          <span class="spin">▼</span><span>🧭 思考过程</span><span class="summary"></span>
+        </button>
+        <div class="trace-body"></div>
+      </div>
+      <div class="answer"><span class="pulse"></span><span class="waiting">思考中…</span></div>
+    </div>`;
+  chatEl.appendChild(div);
+  const trace = div.querySelector(".trace");
+  div.querySelector(".trace-head").addEventListener("click", () => trace.classList.toggle("collapsed"));
+  return div;
+}
+
+function addStep(el, kind, icon, label, valueHtml, obs) {
+  const trace = el.querySelector(".trace");
+  trace.style.display = "block";
+  const body = trace.querySelector(".trace-body");
+  const item = document.createElement("div");
+  item.className = "step-item";
+  let inner = `<span class="ico ${kind}">${icon}</span><span class="lab">${label}</span>`;
+  if (valueHtml) inner += ` <span class="val">${valueHtml}</span>`;
+  if (obs) inner += `<div class="obs-text">${obs}</div>`;
+  item.innerHTML = inner;
+  body.appendChild(item);
+  trace.classList.remove("collapsed");  // 执行中自动展开
+  const cnt = body.querySelectorAll(".step-item").length;
+  trace.querySelector(".summary").textContent = `${cnt} 个步骤`;
+  scrollBottom();
+  return item;
+}
+
+/* ---------- 打字机式逐字输出（豆包风格“虚拟文字”） ---------- */
+let _typeTimer = null;
+function _finalizeTyping(el) {
+  if (el._typeState && !el._typeState.done) {
+    clearTimeout(el._typeState.timer);
+    const { text, ans } = el._typeState;
+    ans.classList.remove("typing");
+    ans.innerHTML = linkify(text);
+    el._typeState.done = true;
+  }
+}
+function setFinal(el, text, isError) {
+  const ans = el.querySelector(".answer");
+  ans.className = "answer" + (isError ? " error-bubble" : "");
+  if (isError) { ans.textContent = text; return; }
+
+  // 若有正在打字的上一条回答，先把它收尾
+  document.querySelectorAll(".msg.assistant").forEach(m => {
+    if (m !== el) _finalizeTyping(m);
+  });
+
+  ans.classList.add("typing");
+  ans.innerHTML = "";
+  const cursor = document.createElement("span");
+  cursor.className = "typing-cursor";
+  ans.appendChild(cursor);
+
+  const state = { text, ans, i: 0, done: false, timer: null };
+  el._typeState = state;
+  const len = text.length;
+  // 文本越长打字越快，避免长答案等太久
+  const speed = len > 1500 ? 4 : len > 600 ? 7 : len > 150 ? 11 : 16;
+  const step = len > 800 ? 3 : len > 200 ? 2 : 1;
+
+  function tick() {
+    if (state.done) return;
+    if (state.i >= len) {
+      ans.classList.remove("typing");
+      ans.innerHTML = linkify(text);
+      state.done = true;
+      const trace = el.querySelector(".trace");
+      if (trace && trace.querySelector(".step-item")) trace.classList.add("collapsed");
+      return;
+    }
+    const piece = document.createTextNode(text.slice(state.i, state.i + step));
+    ans.insertBefore(piece, cursor);
+    state.i += step;
+    scrollBottom();
+    state.timer = setTimeout(tick, speed);
+  }
+  tick();
+
+  const trace = el.querySelector(".trace");
+  if (trace && trace.querySelector(".step-item")) trace.classList.add("collapsed");
+}
+
+/* ---------- SSE 流式接收（fetch POST + ReadableStream） ---------- */
+async function doSend() {
+  const text = input.value.trim();
+  if (!text || busy) return;
+  busy = true; sendBtn.disabled = true; input.value = "";
+  input.style.height = "auto";
+  addUserMsg(text);
+  const el = addAssistantEl();
+  let hasFinal = false;
+
+  try {
+    const resp = await fetch("/api/chat/stream", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: text, session_id: sessionId, web_enabled: $("#webSwitch").checked})
+    });
+    if (!resp.ok || !resp.body) throw new Error("HTTP " + resp.status);
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, {stream: true});
+      let idx;
+      while ((idx = buf.indexOf("\n\n")) >= 0) {
+        const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        let event = "message", data = "";
+        chunk.split("\n").forEach(line => {
+          if (line.startsWith("event:")) event = line.slice(6).trim();
+          else if (line.startsWith("data:")) data += line.slice(5).trim();
+        });
+        if (!data) continue;
+        const payload = JSON.parse(data);
+
+        if (event === "session") { sessionId = payload.session_id; }
+        else if (event === "thought" && payload.text) {
+          addStep(el, "thought", "思", "思考", escapeHtml(payload.text), null);
+        }
+        else if (event === "action") {
+          el.querySelector(".waiting").textContent = `正在调用工具：${payload.tool}…`;
+          const toolIcon = payload.tool.includes("search") ? "搜" : payload.tool.includes("fetch") ? "链" :
+                           payload.tool === "calculator" ? "算" : "具";
+          addStep(el, "action", toolIcon,
+                  `调用工具 <code>${escapeHtml(payload.tool)}</code>`,
+                  `参数：<code>${escapeHtml(payload.input)}</code>`, null);
+        }
+        else if (event === "observation") {
+          const items = el.querySelectorAll(".trace .step-item");
+          const target = items[items.length - 1];
+          const div = document.createElement("div");
+          div.className = "obs-text";
+          div.innerHTML = "观察结果：" + linkify(payload.text.slice(0, 800) + (payload.text.length > 800 ? "…" : ""));
+          target.appendChild(div);
+          scrollBottom();
+        }
+        else if (event === "hint") {
+          el.querySelector(".waiting").textContent = payload;
+        }
+        else if (event === "final") {
+          hasFinal = true;
+          setFinal(el, payload.text, false);
+        }
+        else if (event === "error") {
+          hasFinal = true;
+          setFinal(el, "❌ " + escapeHtml(payload.message), true);
+        }
+      }
+    }
+    if (!hasFinal && !el.querySelector(".answer").classList.contains("error-bubble")) {
+      setFinal(el, "（连接中断，未收到完整回复，请重试）", true);
+    }
+  } catch (e) {
+    setFinal(el, "❌ 请求失败：" + escapeHtml(e.message) + "。请确认后端服务正在运行。", true);
+  } finally {
+    // 若没有任何步骤，移除空的思考过程块
+    if (!el.querySelector(".trace .step-item")) el.querySelector(".trace").style.display = "none";
+    busy = false; sendBtn.disabled = false; input.focus();
+    loadHealth();
+  }
+}
+
+loadHealth();
+syncWebSwitches($("#webSwitch"));
+input.focus();
+</script>
+</body>
+</html>

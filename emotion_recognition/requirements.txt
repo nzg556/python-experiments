@@ -1,0 +1,13 @@
+# 基于 CNN 的人脸表情识别项目依赖
+# Python 3.9 ~ 3.11（Windows 原生 TensorFlow 建议不超过 3.11）
+tensorflow>=2.10,<2.16
+opencv-python>=4.8
+numpy>=1.23,<2.0
+matplotlib>=3.6
+pillow>=9.0
+scikit-learn>=1.1
+# 仅在使用 --hf 下载 FER2013 parquet 真实数据时需要
+pandas>=1.5
+pyarrow>=14.0
+# Web 部署（模块6 部署与应用）
+flask>=2.3

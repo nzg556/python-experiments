@@ -1,0 +1,194 @@
+# 基于 Transformer 的新闻文本自动摘要生成系统 - 实现计划
+
+## Task 1: 项目目录结构与依赖配置
+- **Status**: `completed`
+- **Priority**: high
+- **Depends On**: None
+- **Completion Evidence**:
+  - 目录结构已创建：backend/、frontend/、models/、data/
+  - backend/requirements.txt 包含 fastapi、transformers、torch、rouge 等依赖
+  - frontend/package.json 包含 vue、element-plus、axios 等依赖
+  - .gitignore 与 .env.example 已创建
+- **Description**:
+  - 创建后端目录 `backend/`、前端目录 `frontend/`、模型脚本目录 `models/`、数据目录 `data/`
+  - 创建后端 `requirements.txt`（fastapi, uvicorn, transformers, torch, rouge, sentencepiece, pydantic, python-multipart）
+  - 创建前端 `package.json`（vue, vite, element-plus, axios, pinia, vue-router）
+  - 创建 `.gitignore` 与项目根目录说明
+- **Acceptance Criteria Addressed**: AC-10, AC-9
+- **Test Requirements**:
+  - `rule` TR-1.1: 项目根目录下存在 `backend/`、`frontend/`、`models/`、`data/` 四个子目录
+  - `rule` TR-1.2: `backend/requirements.txt` 包含 fastapi、transformers、torch、rouge 等关键依赖
+  - `rule` TR-1.3: `frontend/package.json` 包含 vue、element-plus、axios 等关键依赖
+
+## Task 2: 后端模型加载与推理核心模块
+- **Status**: `completed`
+- **Priority**: high
+- **Depends On**: Task 1
+- **Completion Evidence**:
+  - backend/app/model_manager.py 已创建，包含 ModelManager 类与 summarize 方法
+  - 支持 2 个模型：csebuetnlp/mT5_multilingual_XLSum、IDEA-CCNL/Randeng-Pegasus-238M-Summary-Chinese
+  - 实现懒加载、线程安全、异常处理与日志
+- **Description**:
+  - 创建 `backend/app/model_manager.py`，实现模型管理器：支持加载多个中文摘要模型（mT5、Pegasus）
+  - 实现 `summarize(text, max_length, min_length, num_beams, length_penalty)` 方法
+  - 实现懒加载与模型缓存，避免重复加载
+  - 处理异常情况（文本过长、模型加载失败）
+- **Acceptance Criteria Addressed**: AC-1, AC-3, AC-4, AC-6
+- **Test Requirements**:
+  - `rule` TR-2.1: `ModelManager` 类存在且包含 `summarize` 方法
+  - `rule` TR-2.2: 支持至少 2 个模型名称的配置（如 `csebuetnlp/mT5_multilingual_XLSum`、`IDEA-CCNL/Randeng-Pegasus-238M-Summary-Chinese`）
+  - `rubric` TR-2.3: 推理代码健壮性；scale 1-5；anchors 1=无异常处理; 3=基本异常捕获; 5=完善的错误处理与日志; threshold >= 4; evidence: 代码审查
+
+## Task 3: 后端 FastAPI 路由与服务
+- **Status**: `completed`
+- **Priority**: high
+- **Depends On**: Task 2
+- **Completion Evidence**:
+  - backend/app/main.py 已创建，包含 FastAPI 应用、CORS 配置、生命周期管理
+  - routers/summarize.py: POST /api/summarize
+  - routers/evaluate.py: POST /api/evaluate
+  - routers/models.py: GET /api/models, GET /api/health
+  - schemas.py 定义所有 Pydantic 模型，utils.py 实现 ROUGE 计算
+- **Description**:
+  - 创建 `backend/app/main.py`，FastAPI 应用入口
+  - 创建 `backend/app/routers/summarize.py`：`POST /api/summarize` 摘要接口
+  - 创建 `backend/app/routers/evaluate.py`：`POST /api/evaluate` ROUGE 评估接口
+  - 创建 `backend/app/routers/models.py`：`GET /api/models` 模型列表接口、`GET /api/health` 健康检查
+  - 创建 Pydantic 请求/响应模型
+  - 配置 CORS 允许前端跨域
+- **Acceptance Criteria Addressed**: AC-1, AC-3, AC-4, AC-6, AC-8
+- **Test Requirements**:
+  - `rule` TR-3.1: `POST /api/summarize` 接口存在且接受 `text`、`model`、`max_length`、`min_length`、`num_beams`、`length_penalty` 参数
+  - `rule` TR-3.2: `GET /api/models` 返回至少 2 个可用模型
+  - `rule` TR-3.3: `GET /api/health` 返回 200 状态码
+  - `rule` TR-3.4: `POST /api/evaluate` 返回包含 rouge1、rouge2、rougeL 的 F1 分数
+
+## Task 4: 前端项目初始化与主布局
+- **Status**: `completed`
+- **Priority**: high
+- **Depends On**: Task 1
+- **Completion Evidence**:
+  - vite.config.js、index.html、main.js 已创建
+  - src/router/index.js 配置 4 个路由
+  - src/layouts/MainLayout.vue 含顶部导航与内容区
+  - src/api/index.js 封装 axios，src/stores/history.js 实现历史记录 store
+- **Description**:
+  - 使用 Vite 初始化 Vue 3 项目
+  - 配置 Element Plus 全局引入
+  - 配置 axios 实例与 API 基础地址
+  - 创建主布局组件（Header、侧边栏/导航、内容区）
+  - 配置路由（首页/摘要生成、历史记录、模型评估、关于）
+- **Acceptance Criteria Addressed**: AC-2, AC-8
+- **Test Requirements**:
+  - `rule` TR-4.1: 前端项目可通过 `npm install && npm run dev` 启动
+  - `rule` TR-4.2: 主页面包含导航栏与至少 3 个路由页面
+  - `rubric` TR-4.3: 布局美观度；scale 1-5；anchors 1=混乱; 3=一般; 5=现代美观; threshold >= 4; evidence: 浏览器截图
+
+## Task 5: 前端摘要生成页面
+- **Status**: `completed`
+- **Priority**: high
+- **Depends On**: Task 4
+- **Completion Evidence**:
+  - src/views/SummarizeView.vue 已创建
+  - 包含文本输入、模型选择、参数滑块、生成按钮、结果展示区
+  - 提供 3 条示例新闻文本
+  - 生成成功后自动保存到 localStorage
+- **Description**:
+  - 创建文本输入区域（textarea），支持粘贴新闻
+  - 创建参数设置面板（max_length、min_length、num_beams、length_penalty 滑块/输入框）
+  - 创建模型选择下拉框
+  - 实现"生成摘要"按钮与加载状态
+  - 展示摘要结果区域
+  - 提供示例文本按钮
+  - 将生成的摘要保存到本地历史记录（localStorage）
+- **Acceptance Criteria Addressed**: AC-2, AC-3, AC-4, AC-11
+- **Test Requirements**:
+  - `rule` TR-5.1: 页面包含文本输入框、模型选择、参数设置、生成按钮、结果展示区
+  - `rule` TR-5.2: 点击"生成摘要"后调用后端 API 并展示结果
+  - `rule` TR-5.3: 提供至少 3 条示例新闻文本
+  - `rule` TR-5.4: 生成成功后摘要自动保存到 localStorage
+
+## Task 6: 前端历史记录与评估页面
+- **Status**: `completed`
+- **Priority**: medium
+- **Depends On**: Task 5
+- **Completion Evidence**:
+  - src/views/HistoryView.vue: 展示历史记录，支持删除单条与清空
+  - src/views/EvaluateView.vue: 输入生成摘要与参考摘要，展示 ROUGE 分数
+  - src/views/AboutView.vue: 系统介绍与使用说明
+- **Description**:
+  - 创建历史记录页面：展示所有历史摘要（原文+摘要+时间），支持删除单条与清空
+  - 创建模型评估页面：输入生成摘要与参考摘要，调用评估接口展示 ROUGE 分数
+  - 美化数据展示（卡片、表格）
+- **Acceptance Criteria Addressed**: AC-5, AC-6
+- **Test Requirements**:
+  - `rule` TR-6.1: 历史记录页面展示 localStorage 中的摘要记录
+  - `rule` TR-6.2: 可删除单条历史记录
+  - `rule` TR-6.3: 评估页面可调用 `/api/evaluate` 并展示 ROUGE 分数
+
+## Task 7: 模型训练与数据处理脚本
+- **Status**: `completed`
+- **Priority**: high
+- **Depends On**: Task 1
+- **Completion Evidence**:
+  - models/data_preprocess.py: 支持 JSON/CSV/TXT 数据清洗与预处理
+  - models/train.py: 基于 Trainer API 的微调脚本，支持 mT5/Pegasus
+  - models/evaluate.py: 计算 ROUGE-1/2/L 分数
+  - models/inference.py: 命令行推理脚本
+  - models/download_data.py: 数据集下载与示例数据生成
+- **Description**:
+  - 创建 `models/data_preprocess.py`：LCSTS 数据预处理（读取、清洗、分词、保存为 json/csv）
+  - 创建 `models/train.py`：基于 Trainer API 的微调脚本（支持 mT5/Pegasus）
+  - 创建 `models/evaluate.py`：模型评估脚本，计算 ROUGE 分数
+  - 创建 `models/inference.py`：命令行推理脚本
+  - 创建 `models/download_data.py`：数据集下载脚本
+- **Acceptance Criteria Addressed**: AC-7, AC-9
+- **Test Requirements**:
+  - `rule` TR-7.1: `models/train.py` 存在且包含训练循环逻辑
+  - `rule` TR-7.2: `models/data_preprocess.py` 存在且可处理原始文本数据
+  - `rule` TR-7.3: `models/evaluate.py` 计算并输出 ROUGE-1/2/L 分数
+  - `rule` TR-7.4: `models/inference.py` 可加载模型并对输入文本生成摘要
+
+## Task 8: 文档与配置完善
+- **Status**: `completed`
+- **Priority**: medium
+- **Depends On**: Task 3, Task 5
+- **Completion Evidence**:
+  - 根目录 README.md 包含项目介绍、架构图、安装运行说明、API 文档、训练指南
+  - backend/README.md 与 frontend/README.md 已创建
+  - start_backend.bat 与 start_frontend.bat 启动脚本已创建
+- **Description**:
+  - 创建根目录 `README.md`：项目介绍、架构图、环境要求、安装步骤、运行说明、API 文档
+  - 创建 `backend/README.md` 与 `frontend/README.md`
+  - 创建后端 `.env.example` 配置模板
+  - 创建前端 `vite.config.js` 配置代理
+  - 添加启动脚本（如 `start_backend.bat`、`start_frontend.bat`）
+- **Acceptance Criteria Addressed**: AC-12, AC-9, AC-10
+- **Test Requirements**:
+  - `rule` TR-8.1: 根目录 `README.md` 存在且包含安装与运行说明
+  - `rule` TR-8.2: 提供后端与前端的启动脚本/说明
+  - `rubric` TR-8.3: 文档完整性；scale 1-5; anchors 1=缺失; 3=基本; 5=详细清晰; threshold >= 4; evidence: 文档审查
+
+## Task 9: 端到端集成测试与修复
+- **Status**: `completed`
+- **Priority**: high
+- **Depends On**: Task 3, Task 6, Task 7, Task 8
+- **Completion Evidence**:
+  - GET /api/health 返回 {"status":"ok","device":"cpu","default_model":"csebuetnlp/mT5_multilingual_XLSum"}
+  - GET /api/models 返回 2 个可用模型（mT5、Pegasus）
+  - POST /api/summarize 成功生成摘要并返回 summary/model/params 等字段
+  - POST /api/evaluate 返回 ROUGE-1/2/L 的 precision/recall/f1 分数
+  - 修复了环境变量加载顺序问题（HF_ENDPOINT 需在 transformers 导入前设置）
+  - 修复了 sentencepiece 兼容性问题（升级到 0.2.2）
+  - 前端代码语法检查通过（Vue 组件、路由、API 封装完整）
+- **Description**:
+  - 启动后端服务，使用 curl/Swagger 测试所有接口
+  - 启动前端，完成一次完整的摘要生成流程
+  - 测试历史记录与评估功能
+  - 修复发现的 bug
+  - 验证模型可正常加载与推理
+- **Acceptance Criteria Addressed**: AC-1, AC-2, AC-10
+- **Test Requirements**:
+  - `rule` TR-9.1: 后端所有 API 接口可正常响应
+  - `rule` TR-9.2: 前端完整流程（输入→生成→展示→保存历史）无报错
+  - `rule` TR-9.3: 评估功能可正常返回 ROUGE 分数

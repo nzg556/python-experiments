@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人脸表情识别 - 静态图片识别</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #333; }
+        .container { max-width: 860px; margin: 24px auto; padding: 0 16px; }
+        h1 { font-size: 22px; margin-bottom: 4px; }
+        .sub { color: #888; font-size: 13px; margin-bottom: 18px; }
+        .card { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 16px;
+                box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .nav a { margin-right: 14px; color: #1a73e8; text-decoration: none; font-size: 14px; }
+        .nav a.active { font-weight: bold; }
+        form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        input[type=file] { flex: 1; min-width: 240px; }
+        button { background: #1a73e8; color: #fff; border: none; border-radius: 6px;
+                 padding: 9px 22px; font-size: 14px; cursor: pointer; }
+        button:hover { background: #1557b0; }
+        .error { color: #d93025; margin-top: 12px; }
+        .result-img { max-width: 100%; border-radius: 8px; margin-top: 14px; }
+        .labels { margin-top: 12px; }
+        .labels li { margin: 4px 0 4px 20px; font-size: 15px; }
+        .tag { display: inline-block; background: #e8f0fe; color: #1a73e8; border-radius: 4px;
+               padding: 1px 8px; margin-right: 8px; font-size: 13px; }
+        .muted { color: #999; font-size: 13px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>人脸表情识别系统</h1>
+        <div class="sub">《神经网络与深度学习实训》- 模块（6）部署与应用 - CNN 情绪识别</div>
+        <div class="nav">
+            <a class="active" href="/">静态图片识别</a>
+            <a href="/realtime">摄像头实时识别</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <form action="/predict_upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <button type="submit">上传并识别</button>
+        </form>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        {% if not results %}<div class="muted">支持 jpg / png / bmp，可包含一张或多张人脸。</div>{% endif %}
+    </div>
+
+    {% if results %}
+    <div class="card">
+        <h1 style="font-size:17px">识别结果</h1>
+        <ul class="labels">
+            {% for r in results %}
+            <li>
+                <span class="tag">{{ r.label_zh }} {{ r.label }}</span>
+                置信度 {{ '%.1f'|format(r.confidence * 100) }}%
+                {% if r.whole_image %}<em class="muted">（未检测到人脸，为整张图片的预测）</em>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% if result_image %}
+        <img class="result-img" src="{{ result_image }}" alt="标注结果">
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>

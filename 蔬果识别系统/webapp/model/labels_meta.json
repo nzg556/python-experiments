@@ -1,0 +1,526 @@
+{
+ "Apple Braeburn": {
+  "cn": "布里本苹果",
+  "kind": "水果"
+ },
+ "Apple Crimson Snow": {
+  "cn": "深红雪苹果",
+  "kind": "水果"
+ },
+ "Apple Golden 1": {
+  "cn": "金苹果1号",
+  "kind": "水果"
+ },
+ "Apple Golden 2": {
+  "cn": "金苹果2号",
+  "kind": "水果"
+ },
+ "Apple Golden 3": {
+  "cn": "金苹果3号",
+  "kind": "水果"
+ },
+ "Apple Granny Smith": {
+  "cn": "青苹果(格兰尼)",
+  "kind": "水果"
+ },
+ "Apple Pink Lady": {
+  "cn": "粉红佳人苹果",
+  "kind": "水果"
+ },
+ "Apple Red 1": {
+  "cn": "红苹果1号",
+  "kind": "水果"
+ },
+ "Apple Red 2": {
+  "cn": "红苹果2号",
+  "kind": "水果"
+ },
+ "Apple Red 3": {
+  "cn": "红苹果3号",
+  "kind": "水果"
+ },
+ "Apple Red Delicious": {
+  "cn": "红蛇果",
+  "kind": "水果"
+ },
+ "Apple Red Yellow 1": {
+  "cn": "红黄苹果1号",
+  "kind": "水果"
+ },
+ "Apple Red Yellow 2": {
+  "cn": "红黄苹果2号",
+  "kind": "水果"
+ },
+ "Apricot": {
+  "cn": "杏",
+  "kind": "水果"
+ },
+ "Avocado": {
+  "cn": "牛油果",
+  "kind": "水果"
+ },
+ "Avocado ripe": {
+  "cn": "熟牛油果",
+  "kind": "水果"
+ },
+ "Banana": {
+  "cn": "香蕉",
+  "kind": "水果"
+ },
+ "Banana Lady Finger": {
+  "cn": "小米蕉",
+  "kind": "水果"
+ },
+ "Banana Red": {
+  "cn": "红香蕉",
+  "kind": "水果"
+ },
+ "Beetroot": {
+  "cn": "甜菜根",
+  "kind": "蔬菜"
+ },
+ "Blueberry": {
+  "cn": "蓝莓",
+  "kind": "水果"
+ },
+ "Cactus fruit": {
+  "cn": "仙人掌果",
+  "kind": "水果"
+ },
+ "Cantaloupe 1": {
+  "cn": "哈密瓜1号",
+  "kind": "水果"
+ },
+ "Cantaloupe 2": {
+  "cn": "哈密瓜2号",
+  "kind": "水果"
+ },
+ "Carambula": {
+  "cn": "杨桃",
+  "kind": "水果"
+ },
+ "Cauliflower": {
+  "cn": "花椰菜",
+  "kind": "蔬菜"
+ },
+ "Cherry 1": {
+  "cn": "樱桃1号",
+  "kind": "水果"
+ },
+ "Cherry 2": {
+  "cn": "樱桃2号",
+  "kind": "水果"
+ },
+ "Cherry Rainier": {
+  "cn": "雷尼尔樱桃",
+  "kind": "水果"
+ },
+ "Cherry Wax Black": {
+  "cn": "黑蜡樱桃",
+  "kind": "水果"
+ },
+ "Cherry Wax Red": {
+  "cn": "红蜡樱桃",
+  "kind": "水果"
+ },
+ "Cherry Wax Yellow": {
+  "cn": "黄蜡樱桃",
+  "kind": "水果"
+ },
+ "Chestnut": {
+  "cn": "板栗",
+  "kind": "坚果"
+ },
+ "Clementine": {
+  "cn": "小柑橘",
+  "kind": "水果"
+ },
+ "Cocos": {
+  "cn": "椰子",
+  "kind": "水果"
+ },
+ "Corn": {
+  "cn": "玉米",
+  "kind": "蔬菜"
+ },
+ "Corn Husk": {
+  "cn": "玉米苞叶",
+  "kind": "蔬菜"
+ },
+ "Cucumber Ripe": {
+  "cn": "黄瓜",
+  "kind": "蔬菜"
+ },
+ "Cucumber Ripe 2": {
+  "cn": "黄瓜2号",
+  "kind": "蔬菜"
+ },
+ "Dates": {
+  "cn": "椰枣",
+  "kind": "水果"
+ },
+ "Eggplant": {
+  "cn": "茄子",
+  "kind": "蔬菜"
+ },
+ "Fig": {
+  "cn": "无花果",
+  "kind": "水果"
+ },
+ "Ginger Root": {
+  "cn": "生姜",
+  "kind": "蔬菜"
+ },
+ "Granadilla": {
+  "cn": "大果西番莲",
+  "kind": "水果"
+ },
+ "Grape Blue": {
+  "cn": "紫葡萄",
+  "kind": "水果"
+ },
+ "Grape Pink": {
+  "cn": "粉红葡萄",
+  "kind": "水果"
+ },
+ "Grape White": {
+  "cn": "白葡萄",
+  "kind": "水果"
+ },
+ "Grape White 2": {
+  "cn": "白葡萄2号",
+  "kind": "水果"
+ },
+ "Grape White 3": {
+  "cn": "白葡萄3号",
+  "kind": "水果"
+ },
+ "Grape White 4": {
+  "cn": "白葡萄4号",
+  "kind": "水果"
+ },
+ "Grapefruit Pink": {
+  "cn": "红心西柚",
+  "kind": "水果"
+ },
+ "Grapefruit White": {
+  "cn": "白西柚",
+  "kind": "水果"
+ },
+ "Guava": {
+  "cn": "番石榴",
+  "kind": "水果"
+ },
+ "Hazelnut": {
+  "cn": "榛子",
+  "kind": "坚果"
+ },
+ "Huckleberry": {
+  "cn": "黑果越橘",
+  "kind": "水果"
+ },
+ "Kaki": {
+  "cn": "甜柿",
+  "kind": "水果"
+ },
+ "Kiwi": {
+  "cn": "猕猴桃",
+  "kind": "水果"
+ },
+ "Kohlrabi": {
+  "cn": "苤蓝",
+  "kind": "蔬菜"
+ },
+ "Kumquats": {
+  "cn": "金桔",
+  "kind": "水果"
+ },
+ "Lemon": {
+  "cn": "柠檬",
+  "kind": "水果"
+ },
+ "Lemon Meyer": {
+  "cn": "梅尔柠檬",
+  "kind": "水果"
+ },
+ "Limes": {
+  "cn": "青柠",
+  "kind": "水果"
+ },
+ "Lychee": {
+  "cn": "荔枝",
+  "kind": "水果"
+ },
+ "Mandarine": {
+  "cn": "蜜橘",
+  "kind": "水果"
+ },
+ "Mango": {
+  "cn": "芒果",
+  "kind": "水果"
+ },
+ "Mango Red": {
+  "cn": "红芒果",
+  "kind": "水果"
+ },
+ "Mangostan": {
+  "cn": "山竹",
+  "kind": "水果"
+ },
+ "Maracuja": {
+  "cn": "百香果",
+  "kind": "水果"
+ },
+ "Melon Piel de Sapo": {
+  "cn": "皱纹皮甜瓜",
+  "kind": "水果"
+ },
+ "Mulberry": {
+  "cn": "桑葚",
+  "kind": "水果"
+ },
+ "Nectarine": {
+  "cn": "油桃",
+  "kind": "水果"
+ },
+ "Nectarine Flat": {
+  "cn": "扁平油桃",
+  "kind": "水果"
+ },
+ "Nut Forest": {
+  "cn": "森林坚果",
+  "kind": "坚果"
+ },
+ "Nut Pecan": {
+  "cn": "碧根果",
+  "kind": "坚果"
+ },
+ "Onion Red": {
+  "cn": "红洋葱",
+  "kind": "蔬菜"
+ },
+ "Onion Red Peeled": {
+  "cn": "去皮红洋葱",
+  "kind": "蔬菜"
+ },
+ "Onion White": {
+  "cn": "白洋葱",
+  "kind": "蔬菜"
+ },
+ "Orange": {
+  "cn": "橙子",
+  "kind": "水果"
+ },
+ "Papaya": {
+  "cn": "木瓜",
+  "kind": "水果"
+ },
+ "Passion Fruit": {
+  "cn": "西番莲果",
+  "kind": "水果"
+ },
+ "Peach": {
+  "cn": "桃子",
+  "kind": "水果"
+ },
+ "Peach 2": {
+  "cn": "桃子2号",
+  "kind": "水果"
+ },
+ "Peach Flat": {
+  "cn": "蟠桃",
+  "kind": "水果"
+ },
+ "Pear": {
+  "cn": "梨",
+  "kind": "水果"
+ },
+ "Pear 2": {
+  "cn": "梨2号",
+  "kind": "水果"
+ },
+ "Pear Abate": {
+  "cn": "阿巴特梨",
+  "kind": "水果"
+ },
+ "Pear Forelle": {
+  "cn": "红彩梨",
+  "kind": "水果"
+ },
+ "Pear Kaiser": {
+  "cn": "凯撒梨",
+  "kind": "水果"
+ },
+ "Pear Monster": {
+  "cn": "丑梨",
+  "kind": "水果"
+ },
+ "Pear Red": {
+  "cn": "红啤梨",
+  "kind": "水果"
+ },
+ "Pear Stone": {
+  "cn": "石梨",
+  "kind": "水果"
+ },
+ "Pear Williams": {
+  "cn": "威廉姆斯梨",
+  "kind": "水果"
+ },
+ "Pepino": {
+  "cn": "人参果",
+  "kind": "水果"
+ },
+ "Pepper Green": {
+  "cn": "青甜椒",
+  "kind": "蔬菜"
+ },
+ "Pepper Orange": {
+  "cn": "橙甜椒",
+  "kind": "蔬菜"
+ },
+ "Pepper Red": {
+  "cn": "红甜椒",
+  "kind": "蔬菜"
+ },
+ "Pepper Yellow": {
+  "cn": "黄甜椒",
+  "kind": "蔬菜"
+ },
+ "Physalis": {
+  "cn": "姑娘果",
+  "kind": "水果"
+ },
+ "Physalis with Husk": {
+  "cn": "带皮姑娘果",
+  "kind": "水果"
+ },
+ "Pineapple": {
+  "cn": "菠萝",
+  "kind": "水果"
+ },
+ "Pineapple Mini": {
+  "cn": "迷你菠萝",
+  "kind": "水果"
+ },
+ "Pitahaya Red": {
+  "cn": "红心火龙果",
+  "kind": "水果"
+ },
+ "Plum": {
+  "cn": "李子",
+  "kind": "水果"
+ },
+ "Plum 2": {
+  "cn": "李子2号",
+  "kind": "水果"
+ },
+ "Plum 3": {
+  "cn": "李子3号",
+  "kind": "水果"
+ },
+ "Pomegranate": {
+  "cn": "石榴",
+  "kind": "水果"
+ },
+ "Pomelo Sweetie": {
+  "cn": "甜心蜜柚",
+  "kind": "水果"
+ },
+ "Potato Red": {
+  "cn": "红皮土豆",
+  "kind": "蔬菜"
+ },
+ "Potato Red Washed": {
+  "cn": "洗净红皮土豆",
+  "kind": "蔬菜"
+ },
+ "Potato Sweet": {
+  "cn": "红薯",
+  "kind": "蔬菜"
+ },
+ "Potato White": {
+  "cn": "白土豆",
+  "kind": "蔬菜"
+ },
+ "Quince": {
+  "cn": "榅桲",
+  "kind": "水果"
+ },
+ "Rambutan": {
+  "cn": "红毛丹",
+  "kind": "水果"
+ },
+ "Raspberry": {
+  "cn": "树莓",
+  "kind": "水果"
+ },
+ "Redcurrant": {
+  "cn": "红醋栗",
+  "kind": "水果"
+ },
+ "Salak": {
+  "cn": "蛇皮果",
+  "kind": "水果"
+ },
+ "Strawberry": {
+  "cn": "草莓",
+  "kind": "水果"
+ },
+ "Strawberry Wedge": {
+  "cn": "切块草莓",
+  "kind": "水果"
+ },
+ "Tamarillo": {
+  "cn": "树番茄",
+  "kind": "水果"
+ },
+ "Tangelo": {
+  "cn": "橘柚",
+  "kind": "水果"
+ },
+ "Tomato 1": {
+  "cn": "番茄1号",
+  "kind": "蔬菜"
+ },
+ "Tomato 2": {
+  "cn": "番茄2号",
+  "kind": "蔬菜"
+ },
+ "Tomato 3": {
+  "cn": "番茄3号",
+  "kind": "蔬菜"
+ },
+ "Tomato 4": {
+  "cn": "番茄4号",
+  "kind": "蔬菜"
+ },
+ "Tomato Cherry Red": {
+  "cn": "圣女果",
+  "kind": "蔬菜"
+ },
+ "Tomato Heart": {
+  "cn": "心形番茄",
+  "kind": "蔬菜"
+ },
+ "Tomato Maroon": {
+  "cn": "褐红番茄",
+  "kind": "蔬菜"
+ },
+ "Tomato Yellow": {
+  "cn": "黄番茄",
+  "kind": "蔬菜"
+ },
+ "Tomato not Ripened": {
+  "cn": "未熟青番茄",
+  "kind": "蔬菜"
+ },
+ "Walnut": {
+  "cn": "核桃",
+  "kind": "坚果"
+ },
+ "Watermelon": {
+  "cn": "西瓜",
+  "kind": "水果"
+ }
+}

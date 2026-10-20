@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}模型评估 - 蔬果智能识别系统{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>训练与验证曲线</h2>
+  <p style="color:#666; margin-bottom:14px; line-height:1.8;">
+    全量 <b>131 类</b>蔬果（训练集 67692 张、测试集 22688 张）共训练 29 个 Epoch（早停）。
+    训练初期学习率偏高导致验证准确率震荡，第 6 轮后学习率自动衰减，验证准确率迅速跃升至 99% 以上；
+    最终测试集准确率达到 <b style="color:#43a047;">99.48%</b>，训练损失与验证损失均平稳收敛。
+  </p>
+  <img class="responsive" src="{{ url_for('static', filename='img/training_curves.png') }}">
+</div>
+<div class="grid-2">
+  <div class="card">
+    <h2>测试集混淆矩阵（131类）</h2>
+    <img class="responsive" src="{{ url_for('static', filename='img/confusion_matrix.png') }}">
+  </div>
+  <div class="card">
+    <h2>测试集样本识别效果</h2>
+    <img class="responsive" src="{{ url_for('static', filename='img/sample_predictions.png') }}">
+  </div>
+</div>
+<div class="card">
+  <h2>数据集样本展示</h2>
+  <img class="responsive" src="{{ url_for('static', filename='img/dataset_samples.png') }}">
+</div>
+{% endblock %}

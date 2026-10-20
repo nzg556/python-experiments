@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}静态检测 - 蔬果智能识别系统{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <h2>图像输入</h2>
+    <div id="drop" style="border:2px dashed #a5d6a7; border-radius:12px; height:260px; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#81c784; cursor:pointer; overflow:hidden; transition:.2s;">
+      <p>点击选择图片，或拖拽图片到此处</p>
+      <p style="font-size:12px; margin-top:6px;">支持 jpg / png 格式</p>
+    </div>
+    <input type="file" id="file" accept="image/*" hidden>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" id="predBtn" style="width:100%;">开始识别</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>识别结果</h2>
+    <div id="result"><div class="placeholder">请先上传图片</div></div>
+  </div>
+</div>
+
+<script>
+const drop = document.getElementById('drop'), file = document.getElementById('file');
+const predBtn = document.getElementById('predBtn'), result = document.getElementById('result');
+let imgData = null;
+
+drop.onclick = () => file.click();
+drop.ondragover = e => e.preventDefault();
+drop.ondrop = e => { e.preventDefault(); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+file.onchange = () => file.files[0] && loadFile(file.files[0]);
+
+function loadFile(f) {
+  const r = new FileReader();
+  r.onload = e => { imgData = e.target.result; drop.innerHTML = `<img src="${imgData}" style="max-width:100%; max-height:100%; object-fit:contain;">`; };
+  r.readAsDataURL(f);
+}
+
+predBtn.onclick = async () => {
+  if (!imgData) { alert('请先选择图片'); return; }
+  result.innerHTML = '<div class="placeholder">识别中...</div>';
+  const res = await fetch('/predict', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: imgData })
+  });
+  const data = await res.json();
+  if (data.error) { result.innerHTML = `<div class="placeholder">${data.error}</div>`; return; }
+  renderResult(data.results);
+};
+
+function renderResult(r) {
+  const top = r[0];
+  result.innerHTML = `
+    <div class="main-result"><span class="name">${top.cn}</span>
+      <span class="kind">${top.kind}</span>
+      <span style="color:#43a047; font-size:18px;">${top.prob}%</span></div>
+    ${r.map(x => `<div class="bar-row"><div class="lab"><span>${x.cn}（${x.label}）</span><span>${x.prob}%</span></div>
+      <div class="bar"><div style="width:${x.prob}%"></div></div></div>`).join('')}`;
+}
+</script>
+{% endblock %}

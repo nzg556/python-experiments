@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}首页 - 蔬果智能识别系统{% endblock %}
+{% block content %}
+<div class="card" style="text-align:center; padding:48px 24px;">
+  <h1 style="color:#2e7d32; font-size:34px; letter-spacing:4px;">🍎 蔬果智能识别系统 🥒</h1>
+  <p style="color:#558b2f; margin-top:14px; font-size:17px;">基于卷积神经网络（CNN）的 131 类蔬果全量识别</p>
+  <div style="margin-top:28px;">
+    <a href="/static"><button class="btn btn-primary">上传图片识别</button></a>
+    <a href="/dynamic" style="margin-left:14px;"><button class="btn btn-secondary">摄像头实时监测</button></a>
+  </div>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <h2>项目简介</h2>
+    <p style="line-height:1.9; color:#555;">
+      本系统基于 <b>fruits-360</b> 公开数据集，使用 TensorFlow / Keras 构建卷积神经网络，
+      <b>使用数据集全部 131 个类别</b>（训练集 67692 张、测试集 22688 张），
+      每张图片在 30 轮训练中被反复学习，并引入随机翻转、旋转、缩放、亮度、对比度等
+      <b>数据增强</b>策略，显著提升真实摄像头场景下的实时识别泛化能力。
+      推理阶段融合 CNN 概率与<b>颜色 / 形状手工特征</b>，进一步修正易混淆类别，
+      支持静态图片上传与摄像头动态监测两种识别方式。
+    </p>
+  </div>
+  <div class="card">
+    <h2>模型结构</h2>
+    <table style="width:100%; border-collapse:collapse; font-size:14px; color:#555;">
+      <tr style="background:#f1f8e9;"><th style="padding:8px; text-align:left;">层</th><th style="padding:8px; text-align:left;">说明</th></tr>
+      <tr><td style="padding:8px;">数据增强</td><td style="padding:8px;">翻转/旋转/缩放/亮度/对比度</td></tr>
+      <tr style="background:#fafafa;"><td style="padding:8px;">卷积块 ×4</td><td style="padding:8px;">32/64/128/256 + BN + MaxPool</td></tr>
+      <tr><td style="padding:8px;">全局平均池化</td><td style="padding:8px;">GlobalAveragePooling2D</td></tr>
+      <tr style="background:#fafafa;"><td style="padding:8px;">全连接层</td><td style="padding:8px;">Dense(512) + BN + Dropout(0.5)</td></tr>
+      <tr><td style="padding:8px;">输出层</td><td style="padding:8px;">Dense(131, Softmax)</td></tr>
+      <tr style="background:#fafafa;"><td style="padding:8px;">融合层</td><td style="padding:8px;">颜色+形状特征 → 逻辑回归</td></tr>
+    </table>
+  </div>
+</div>
+{% endblock %}
